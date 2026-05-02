@@ -1,7 +1,17 @@
 """
-Data Quality Scorecard Engine
-Evaluates DQ rules per pipeline run and writes results to gold.dq_scorecard.
-Raises alerts via SNS when MUST_PASS or HIGH rules fail.
+Data quality scorecard — runs after every silver load, writes results to gold.dq_scorecard.
+
+I split rules into MUST_PASS and HIGH/MEDIUM/LOW because not every quality issue
+should stop the pipeline. A slightly stale AECB report (DQ-AECB-03) shouldn't block
+10K other decisions — but a negative fraud score (DQ-FRAUD-01) absolutely should,
+because the whole scoring model breaks if the input is out of range.
+
+MUST_PASS failures halt the pipeline and page the team.
+HIGH failures send an alert but let the pipeline continue — decisions made during
+the degraded period get a lower dq_score so underwriters know to scrutinise them.
+
+The thresholds (95%, 99% etc.) were set conservatively at launch. Plan to review
+them after 30 days once we have a baseline of what "normal" looks like.
 """
 
 import json
